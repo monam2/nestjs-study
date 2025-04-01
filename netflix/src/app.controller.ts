@@ -1,68 +1,41 @@
 import {
+  Body,
   Controller,
   Delete,
   Get,
-  NotFoundException,
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { AppService } from './app.service';
 
-interface Movie {
-  id: number;
-  title: string;
-}
-
 @Controller('movie')
 export class AppController {
-  private movies: Movie[] = [
-    {
-      id: 1,
-      title: '해리포터',
-    },
-    {
-      id: 2,
-      title: '반지의 제왕',
-    },
-  ];
-
   constructor(private readonly appService: AppService) {}
 
   @Get()
-  getMovies() {
-    return this.movies;
+  getMovies(@Query('title') title?: string) {
+    return this.appService.getManyMovies(title);
   }
 
-  @Get('/:id')
-  getMovie(@Param('id') id: string) {
-    const movie = this.movies.find((m) => m.id === +id);
-
-    if (!movie) {
-      throw new NotFoundException('존재하지 않는 영화입니다.');
-    }
-
-    return movie;
+  @Get(':id')
+  getMovie(@Param('id') id: number) {
+    return this.appService.getMovieById(+id);
   }
 
   @Post()
-  postMovie() {
-    return {
-      id: 3,
-      title: '어벤져스',
-    };
+  postMovie(@Body('title') title: string) {
+    return this.appService.createMovie(title);
   }
 
-  @Patch('/:id')
-  patchMovie() {
-    return {
-      id: 3,
-      title: '어벤져스',
-    };
+  @Patch(':id')
+  patchMovie(@Param('id') id: string, @Body('title') title: string) {
+    return this.appService.modifyMovie(+id, title);
   }
 
-  @Delete('/:id')
-  deleteMovie() {
-    return 3;
+  @Delete(':id')
+  deleteMovie(@Param('id') id: string) {
+    return this.appService.deleteMovie(+id);
   }
 }
