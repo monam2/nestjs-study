@@ -12,12 +12,15 @@ export class MovieService {
     private readonly movieRepository: Repository<Movie>,
   ) {}
 
-  getManyMovies(title?: string) {
+  async getManyMovies(title?: string) {
     if (!title) {
-      return this.movieRepository.find();
+      return {
+        data: await this.movieRepository.find(),
+        cnt: await this.movieRepository.count(),
+      };
     }
 
-    const movies = this.movieRepository.find({
+    const movies = await this.movieRepository.find({
       where: {
         title: ILike(`%${title}%`),
       },
