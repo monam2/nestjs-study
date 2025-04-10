@@ -4,18 +4,24 @@ import { UpdateMovieDto } from './dto/update-movie.dto';
 import { Movie } from './entity/movie.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ILike, Repository } from 'typeorm';
+import { MovieDetail } from './entity/movie-detail.entity';
 
 @Injectable()
 export class MovieService {
   constructor(
     @InjectRepository(Movie)
     private readonly movieRepository: Repository<Movie>,
+
+    @InjectRepository(MovieDetail)
+    private readonly movieDetailRepository: Repository<MovieDetail>,
   ) {}
 
   async getManyMovies(title?: string) {
     if (!title) {
       return {
-        data: await this.movieRepository.find(),
+        data: await this.movieRepository.find({
+          relations: ['detail'],
+        }),
         cnt: await this.movieRepository.count(),
       };
     }
@@ -24,9 +30,10 @@ export class MovieService {
       where: {
         title: ILike(`%${title}%`),
       },
+      relations: ['detail'],
     });
 
-    return movies;
+    return { data: movies, cnt: movies.length };
   }
 
   async getMovieById(id: number) {
@@ -34,6 +41,7 @@ export class MovieService {
       where: {
         id,
       },
+      relations: ['detail'],
     });
 
     if (!movie) {
@@ -44,7 +52,15 @@ export class MovieService {
   }
 
   async createMovie(createMovieDto: CreateMovieDto) {
-    const movie = await this.movieRepository.save(createMovieDto);
+    const movieDetail = await this.movieDetailRepository.save({
+      detail: createMovieDto.detail,
+    });
+
+    const movie = await this.movieRepository.save({
+      title: createMovieDto.title,
+      genre: createMovieDto.genre,
+      detail: movieDetail,
+    });
 
     return movie;
   }
