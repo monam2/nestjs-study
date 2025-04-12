@@ -16,7 +16,7 @@ export class MovieService {
     private readonly movieDetailRepository: Repository<MovieDetail>,
   ) {}
 
-  async getManyMovies(title?: string) {
+  async findAll(title?: string) {
     if (!title) {
       return {
         data: await this.movieRepository.find({
@@ -36,7 +36,7 @@ export class MovieService {
     return { data: movies, cnt: movies.length };
   }
 
-  async getMovieById(id: number) {
+  async findOne(id: number) {
     const movie = await this.movieRepository.findOne({
       where: {
         id,
@@ -51,7 +51,7 @@ export class MovieService {
     return movie;
   }
 
-  async createMovie(createMovieDto: CreateMovieDto) {
+  async create(createMovieDto: CreateMovieDto) {
     const movieDetail = await this.movieDetailRepository.save({
       detail: createMovieDto.detail,
     });
@@ -65,7 +65,7 @@ export class MovieService {
     return movie;
   }
 
-  async updateMovie(id: number, updateMovieDto: UpdateMovieDto) {
+  async update(id: number, updateMovieDto: UpdateMovieDto) {
     const movie = await this.movieRepository.findOne({
       where: { id },
     });
@@ -83,12 +83,17 @@ export class MovieService {
     return newMovie;
   }
 
-  async deleteMovie(id: number) {
-    const result = await this.movieRepository.delete(id);
+  async remove(id: number) {
+    const movie = await this.movieRepository.findOne({
+      where: { id },
+      relations: ['detail'],
+    });
 
-    if (result.affected === 0)
+    if (!movie) {
       throw new NotFoundException('존재하지 않는 ID의 영화입니다.');
+    }
 
-    return id;
+    await this.movieRepository.delete(id);
+    await this.movieDetailRepository.delete(movie.detail.id);
   }
 }
